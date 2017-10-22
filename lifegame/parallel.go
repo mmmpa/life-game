@@ -107,13 +107,7 @@ func worker(in WorkerIn, out WorkerOut, tasks []Task) {
 				field := <-in
 				cells := make([]Cell, task.End-task.Start)
 				for i := task.Start; i < task.End; i++ {
-					y := i / task.Field.W
-					x := 0
-					if y != 0 {
-						x = i % y
-					}
-
-					if field.isAlive(x, y) {
+					if field.isAlive(i) {
 						cells[i] = Cell(1)
 					}
 				}

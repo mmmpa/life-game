@@ -47,7 +47,7 @@ func (f Field) addLife(x, y int) {
 	f.Cells[y*f.W+x] = 1
 }
 
-func (f Field) isAlive(x, y int) bool {
+func (f Field) isAlive(i int) bool {
 	// 周りの生命の数を数える
 	lives := Cell(0)
 
