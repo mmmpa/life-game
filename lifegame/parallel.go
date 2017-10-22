@@ -1,6 +1,8 @@
 package lifegame
 
-import "runtime"
+import (
+	"runtime"
+)
 
 type Task struct {
 	Start int
@@ -27,11 +29,11 @@ func parallel(field Field) chan Field {
 		cpus := runtime.NumCPU()
 
 		tasks := split(field, cpus)
-		bossOut, workerIn, workerOut := boss(field, cpus)
+		resultOut, workerIn, workerOut := boss(field, cpus)
 
 		worker(workerIn, workerOut, tasks)
 
-		for result := range bossOut {
+		for result := range resultOut {
 			ch <- result
 		}
 	}()
@@ -45,9 +47,9 @@ func split(field Field, workersNum int) []Task {
 	rest := l % workersNum
 
 	tasks := make([]Task, workersNum)
-	tail := 0
+	tail := 1
 	for i := 0; i < workersNum; i++ {
-		end := tail + base
+		end := tail + (base - 1)
 
 		if rest > 0 {
 			rest -= 1
@@ -55,10 +57,12 @@ func split(field Field, workersNum int) []Task {
 		}
 
 		tasks[i] = Task{
-			Start: tail,
-			End:   end,
+			Start: tail - 1,
+			End:   end - 1,
 			Field: field,
 		}
+
+		tail = end + 1
 	}
 
 	return tasks
@@ -74,7 +78,9 @@ func boss(field Field, workersNum int) (ResultOut, WorkerIn, WorkerOut) {
 	go func() {
 		base := field
 
-		for {
+		for i := 0; true; i++ {
+			resultOut <- base
+
 			for i := 0; i < workersNum; i++ {
 				workerIn <- base
 			}
@@ -84,14 +90,12 @@ func boss(field Field, workersNum int) (ResultOut, WorkerIn, WorkerOut) {
 			// write 作業なので直列で行う
 			for i := 0; i < workersNum; i++ {
 				cells := <-workerOut
-				// field への適用
 				for p, cell := range cells.Cells {
 					nextField.Cells[cells.Task.Start+p] = cell
 				}
 			}
 
 			base = nextField
-			resultOut <- nextField
 		}
 	}()
 
@@ -105,12 +109,14 @@ func worker(in WorkerIn, out WorkerOut, tasks []Task) {
 		go func(task Task) {
 			for {
 				field := <-in
-				cells := make([]Cell, task.End-task.Start)
-				for i := task.Start; i < task.End; i++ {
-					if field.isAlive(i) {
+				l := (task.End - task.Start) + 1
+				cells := make([]Cell, l)
+				for i := 0; i < l; i++ {
+					if field.isAlive(task.Start + i) {
 						cells[i] = Cell(1)
 					}
 				}
+
 				out <- Cells{
 					Task:  task,
 					Cells: cells,
