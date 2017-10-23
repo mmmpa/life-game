@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/mmmpa/life-game/life-game"
 	"log"
 	"encoding/json"
 	"io/ioutil"
@@ -11,6 +10,7 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"flag"
+	"github.com/mmmpa/life-game/lifegame"
 )
 
 func main() {
@@ -30,7 +30,7 @@ func main() {
 		c = toConfigurationFromImage(*file)
 	}
 
-	life_game.Run(*wait, c.Field.W, c.Field.H, c.Lives)
+	lifegame.Run(*wait, c.Field.W, c.Field.H, c.Lives)
 }
 
 type Configuration struct {
@@ -38,7 +38,7 @@ type Configuration struct {
 					H int `json:"h"`
 					W int `json:"w"`
 				} `json:"field"`
-	Lives []life_game.Position `json:"lives"`
+	Lives []lifegame.FieldPosition `json:"lives"`
 }
 
 func toConfigurationFromJSON(path string) Configuration {
@@ -84,7 +84,7 @@ func toConfigurationFromImage(path string) Configuration {
 			r, g, b, _ := img.At(x, y).RGBA()
 
 			if(r + g + b == 0) {
-				c.Lives = append(c.Lives, life_game.Position{x, y})
+				c.Lives = append(c.Lives, lifegame.FieldPosition{x, y})
 			}
 		}
 	}
